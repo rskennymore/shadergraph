@@ -1,0 +1,60 @@
+[package]
+name = "shadergraph-editor"
+version = "0.1.0"
+edition = "2021"
+description = "Node editor for `shadergraph`, with a live lit preview."
+keywords = ["shader", "wgsl", "node-graph", "editor", "material"]
+categories = ["graphics", "game-development", "rendering"]
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "shadergraph-editor"
+path = "src/main.rs"
+
+[dependencies]
+shadergraph = { path = "..", version = "0.1.0", features = ["serde"] }
+shadergraph-bevy = { path = "../bevy", version = "0.1.0" }
+
+# Graph save/load. `Snarl` derives Serialize/Deserialize behind its own `serde`
+# feature and carries node positions, so a saved file preserves the layout — not
+# just the wiring — which is most of the reason to save one.
+serde_json = "1.0"
+
+# The feature list mirrors what a typical consuming application enables rather
+# than being trimmed to what an editor "needs". The preview is only worth having
+# if it renders the way the consumer does, and render features are exactly the
+# sort of thing that changes how a surface looks — so err toward parity.
+bevy = { version = "0.19", features = [
+    "bevy_render",
+    "bevy_core_pipeline",
+    "bevy_winit",
+    "bevy_pbr",
+    "bevy_text",
+    "bevy_picking",
+    "bevy_window",
+    "x11",
+    # Image formats a Tex Image node can point at. PNG and KTX2 ride in on
+    # the default features; these four do not, and a format missing here
+    # fails at load time with a message about an unknown extension.
+    "jpeg",
+    "tga",
+    "dds",
+    "exr",
+] }
+
+# Pins egui to 0.35 — and that is what decides the node-graph library below.
+bevy_egui = "0.41"
+
+# The node canvas. Chosen over `egui_node_graph2`, which trails egui releases
+# and so cannot coexist with a current bevy_egui. Licensed `MIT OR Apache-2.0`,
+# which matches this workspace; a copyleft or single-licence widget crate here
+# would quietly constrain everything that links it.
+egui-snarl = { version = "0.11", features = ["serde"] }
+
+# Type-checks a generated shader before it is handed to the renderer.
+#
+# Not because the renderer would crash — Bevy logs a shader error and carries on
+# — but because the message needs to reach a panel in this window rather than
+# scrolling past in a terminal nobody is reading. Kept on the major version the
+# graphics stack already resolves, so it costs nothing extra.
+naga = { version = "29.0", features = ["wgsl-in"] }

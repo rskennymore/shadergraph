@@ -1,0 +1,17 @@
+[package]
+name = "shadergraph-bevy"
+version = "0.1.0"
+edition = "2021"
+description = "Bevy material that renders a shader compiled by `shadergraph`."
+keywords = ["shader", "wgsl", "node-graph", "bevy", "material"]
+categories = ["graphics", "game-development", "rendering"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+shadergraph = { path = "..", version = "0.1.0" }
+
+# `default-features = false` because a *library* has no business deciding
+# whether the consumer wants audio or a window. Only `bevy_pbr` is required —
+# it pulls the render and asset stacks with it — and cargo unions this with
+# whatever the consumer asks for anyway.
+bevy = { version = "0.19", default-features = false, features = ["bevy_pbr"] }

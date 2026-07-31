@@ -1,0 +1,77 @@
+[package]
+name = "shadergraph"
+version = "0.1.0"
+edition = "2021"
+description = "A node graph that compiles to WGSL: procedural materials authored as a graph, emitted as shader source targeting a physically-based renderer."
+keywords = ["shader", "wgsl", "node-graph", "procedural", "material"]
+categories = ["graphics", "game-development", "rendering"]
+# Licence is set from day one rather than deferred, because for this crate it is
+# load-bearing rather than paperwork: the whole reason the node maths is written
+# from published algorithm descriptions (see src/wgsl/*.wgsl provenance headers)
+# is to keep this dual licence honest. Copying from a single-licence source —
+# even a permissive one like Cycles' Apache-2.0 — would force this to Apache-2.0
+# alone plus a NOTICE file, and would mislead any downstream user who picked the
+# MIT half. Do not paste third-party shader code in here without revisiting this.
+license = "MIT OR Apache-2.0"
+# Pre-publish TODOs (deliberately absent until decided/verifiable):
+# - repository: added once the remote exists (do not point at a nonexistent URL).
+# - rust-version: set + CI-verified before publish; an untested MSRV claim is
+#   worse than none.
+
+[dependencies]
+# NONE by default, and that is a design constraint rather than an accident. The
+# compiler is string manipulation over a small IR; it has no reason to know about
+# a renderer, a maths library, or a serialisation format. Keeping the default
+# build at zero dependencies is what lets it be tested headlessly in milliseconds
+# and vendored anywhere.
+#
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[features]
+# Serialisation of the node vocabulary, so an editor can save a graph.
+#
+# Optional and off by default, as promised in the dependency notes below: a
+# compiler has no business requiring a serialisation format, and a consumer that
+# only emits WGSL should not pay for one.
+serde = ["dep:serde"]
+
+[dev-dependencies]
+# Validates that emitted WGSL actually parses and type-checks, without a GPU and
+# without launching an application. Kept on the same major version wgpu
+# resolves, so a host that already builds Bevy pulls in nothing new.
+#
+# Dev-only on purpose: shipping a shader compiler that depends on a second
+# shader compiler would be absurd. Nothing in `src/` may reference it.
+naga = { version = "29.0", features = ["wgsl-in"] }
+
+# This crate is its OWN workspace root, not an implicit member of a host
+# checkout's workspace (a game may vendor it under vendor/). Running cargo
+# inside this directory therefore uses this crate's own committed Cargo.lock and
+# target/ — which is what makes the zero-dependency purity check observable at
+# all. Host builds are unaffected: a path dependency resolves in the host's
+# graph regardless.
+#
+# The two members DO depend on a renderer, and that is the point of the split.
+# `shadergraph-bevy` is the engine binding and `shadergraph-editor` is the
+# authoring tool; both are things a consumer might want and neither belongs in
+# the compiler. Because the workspace root is itself a package, `cargo test`
+# here still builds only this crate — the members are opt-in via `-p`, so the
+# fast headless test loop survives having a game engine in the same workspace.
+[workspace]
+members = ["bevy", "editor"]
+
+# Being our own workspace root means we inherit none of a host checkout's
+# profile tuning, and the editor is a Bevy app: unoptimised dependencies make it
+# unusable rather than merely slow. These are the settings Bevy's own docs
+# recommend — dependencies fully optimised, this workspace's crates barely so,
+# which keeps an edit-compile-run loop fast while the engine underneath runs at
+# something like release speed.
+#
+# Only consulted when cargo is run from inside this directory. A host that
+# vendors this crate as a path dependency governs the whole build graph from its
+# own root manifest, and cargo ignores these.
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
