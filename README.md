@@ -4,6 +4,17 @@ A node graph that compiles to WGSL. Procedural materials are authored as a graph
 of small nodes and emitted as shader source targeting a physically-based
 renderer.
 
+![](screenshot.png)
+
+## Running it
+
+```sh
+cargo run --release -p shadergraph-editor
+```
+
+Drag and drop gltf files onto the editor to preview on custom mesh. 
+
+
 This project is a dev tool, there are rough edges, ux/ui is a work in progress.
 
 The root crate is the compiler half only — no editor, no renderer, and **no
@@ -33,10 +44,6 @@ cargo run --example dump -- hull_metal
 | `shadergraph` | graph → WGSL. The whole compiler | **none** (`naga` dev-only) |
 | `shadergraph-bevy` | the `Material` that renders the output | `bevy` |
 | `shadergraph-editor` | node canvas with a live lit preview | `bevy`, `bevy_egui`, `egui-snarl` |
-
-```sh
-cargo run -p shadergraph-editor
-```
 
 The split is not organisational tidiness. The compiler is the part worth
 vendoring anywhere, and it has no business knowing a renderer exists; keeping its
@@ -119,12 +126,6 @@ test that cannot fail reads as coverage while providing none.
 
 What none of this proves is that a shader *looks right*. Only a GPU and a mark 1 
 eyeball can do that.
-
-## What it does not do yet
-
-See [`WISHLIST.md`](WISHLIST.md), which is ranked and honest about difficulty. The short version:
-there is no normal-map node yet (image sampling exists; tangent-space normals are the hard half),
-and the editor's save format has no version field.
 
 ## Licensing
 

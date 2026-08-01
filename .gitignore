@@ -1,3 +1,4 @@
+.idea
 /target
 /graph.json
 /shader.wgsl
